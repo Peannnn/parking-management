@@ -1,0 +1,25 @@
+:root {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  color: #19263a;
+  background: #eef2f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 400;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input { font: inherit; }
+button, a, label { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; border: 0; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+a { color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible,
+summary:focus-visible, .button:focus-within {
+  outline: 3px solid #2f83ff;
+  outline-offset: 4px;
+}
+h1, h2, h3, p { margin: 0; }
+input { min-width: 0; }
+::selection { background: #d5ed9a; color: #172530; }
