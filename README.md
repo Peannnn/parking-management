@@ -2,17 +2,7 @@
 
 A React + Vite parking workspace with a Python ALPR engine running on this computer. Uploading a vehicle photo automatically detects plate locations, crops each detected plate internally, and reads the characters with a dedicated license-plate model. Multiple plates are selectable, with detection and recognition confidence shown separately. Review or edit a result before saving.
 
-## Run on this computer
-
-The Python environment and models have already been installed in this project. From the directory containing `package.json`:
-
-```powershell
-npm run dev
-```
-
-This starts the React app and local API together. Open the Vite URL printed in the terminal, normally http://127.0.0.1:5173. Keep the terminal open; Ctrl+C stops both processes. Ports 5173 (UI, or Vite's next free port) and 8000 (API) are used. To preserve records from the earlier app, continue using http://localhost:5173 — browser storage is separate for each hostname and port.
-
-## One-time setup on another computer
+## One-time setup
 
 Requires Python 3.10+ (tested on 3.12) and Node 22.13+ or 24+. In PowerShell:
 
