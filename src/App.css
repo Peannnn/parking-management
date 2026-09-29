@@ -46,6 +46,8 @@ h3 { margin-bottom: 10px; font-size: 15px; font-weight: 650; }
 .button.secondary { flex: 1; position: relative; color: #203448; background: #d5ef9e; border: 1px solid #c3de8b; cursor: pointer; }
 .button.secondary:hover { background: #c9e88b; box-shadow: 0 3px 8px #364c1910; }
 .button.secondary + .button.secondary { background: #f5f7fa; border-color: #dce4ec; }
+.button.secondary.subtle { background: #f5f7fa; border-color: #dce4ec; }
+.button.camera-capture-button { background: #d5ef9e; border-color: #c3de8b; }
 .button input[type=file] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .button.disabled { opacity: .45; cursor: not-allowed; }
 .primary { background: #1b304c; color: white; }
@@ -87,6 +89,15 @@ footer { display: flex; justify-content: space-between; gap: 15px; margin-top: 2
 .image-area { position: relative; width: 100%; line-height: 0; }
 .image-area img { display: block; width: 100%; }
 .automatic-preview { overflow: hidden; border-radius: 8px; border: 1px solid #dae2ec; }
+.camera-preview { position: relative; overflow: hidden; min-height: 294px; border: 1px solid #314760; border-radius: 8px; background: #0c1725; line-height: 0; }
+.camera-preview video { display: block; width: 100%; min-height: 294px; max-height: 480px; object-fit: cover; }
+.live-label { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 5px; background: #13263ce6; color: #e8f6cf; font-size: 9px; font-weight: 700; letter-spacing: 1.1px; line-height: 1; }
+.live-label i { width: 7px; height: 7px; border-radius: 50%; background: #c7ed89; box-shadow: 0 0 0 4px #c7ed8920; }
+.camera-guide { position: absolute; inset: 22% 15%; border: 2px solid #c7ed89; border-radius: 8px; box-shadow: 0 0 0 999px #07121e3d; }
+.camera-guide::before, .camera-guide::after { content: ''; position: absolute; width: 30px; height: 30px; border-color: #fff; border-style: solid; }
+.camera-guide::before { left: -3px; top: -3px; border-width: 3px 0 0 3px; }
+.camera-guide::after { right: -3px; bottom: -3px; border-width: 0 3px 3px 0; }
+.camera-guide span { position: absolute; left: 50%; bottom: -31px; transform: translateX(-50%); padding: 6px 9px; border-radius: 4px; background: #102338dc; color: #fff; font-size: 10px; line-height: 1.2; white-space: nowrap; }
 .detection-box { position: absolute; padding: 0; min-height: 8px; min-width: 8px; border: 2px solid #d9ed95; border-radius: 2px; background: #d9ed9515; }
 .detection-box.selected { border-color: #b5ff59; box-shadow: 0 0 0 1px #223648; }
 .detection-box span { position: absolute; left: -2px; top: 100%; padding: 4px 6px; border-radius: 0 0 4px 4px; background: #172d44; color: #dcf3a7; font: 600 11px 'Segoe UI', sans-serif; line-height: 1.5; white-space: nowrap; }

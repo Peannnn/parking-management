@@ -1,6 +1,6 @@
 # Parkcontrol — local automatic license plate recognition
 
-A React + Vite parking workspace with a Python ALPR engine running on this computer. Uploading a vehicle photo automatically detects plate locations, crops each detected plate internally, and reads the characters with a dedicated license-plate model. Multiple plates are selectable, with detection and recognition confidence shown separately. Review or edit a result before saving.
+A React + Vite parking workspace with a Python ALPR engine running on this computer. Uploading a vehicle photo or capturing one with the browser camera automatically detects plate locations, crops each detected plate internally, and reads the characters with a dedicated license-plate model. Multiple plates are selectable, with detection and recognition confidence shown separately. Review or edit a result before saving.
 
 ## One-time setup
 
@@ -20,13 +20,13 @@ The one-time model setup downloads about 11 MB of public models into `backend/mo
 
 ## Use
 
-1. Upload a JPG, PNG, or WebP photo (up to 15 MB and 24 megapixels).
+1. Upload a JPG, PNG, or WebP photo (up to 15 MB and 24 megapixels), or choose **Use camera**, allow access, and take a snapshot.
 2. Recognition starts immediately. No crop selection or second scan click is needed.
 3. Detected plates are outlined on the photo. Select a box or a plate button when several are found.
 4. Review/edit the plate, then save the record. Repeat selection and save for other plates.
 5. If no plate is detected or characters cannot be read, try a clearer, closer photo or enter the plate manually. Retry recognition is available if the engine was not running.
 
-The browser normalizes image orientation, strips metadata, and limits the longest side to 3000 pixels before sending pixels to the local API. Blurry, tiny, angled, obscured, or unfamiliar plate styles can still fail. The model recognizes Latin letters/digits; confidence scores are not a guarantee or plate validation. This workflow is for uploaded still photos, not live camera tracking.
+The browser normalizes uploaded-image orientation, strips metadata, and limits the longest side to 3000 pixels before sending pixels to the local API. Camera access works on localhost or HTTPS and requires browser permission. A camera snapshot is recognized after capture; the app does not continuously scan or track live video. Blurry, tiny, angled, obscured, or unfamiliar plate styles can still fail. The model recognizes Latin letters/digits; confidence scores are not a guarantee or plate validation.
 
 ## How processing stays local
 

@@ -15,11 +15,16 @@ export default function App() {
   const [selected, setSelected] = useState(0)
   const [history, setHistory] = useState(loadHistory)
   const [service, setService] = useState('Checking local engine…')
+  const [camera, setCamera] = useState(false)
+  const [openingCamera, setOpeningCamera] = useState(false)
   const [todos, setTodos] = useState([])
   const [todoStatus, setTodoStatus] = useState(supabase ? 'Loading…' : 'Supabase is not configured.')
   const activeRequest = useRef(null)
   const mounted = useRef(false)
   const previewUrl = useRef(null)
+  const video = useRef(null)
+  const stream = useRef(null)
+  const cameraRequest = useRef(0)
   const chosen = result?.plates[selected]
 
   useEffect(() => {
@@ -33,9 +38,15 @@ export default function App() {
       mounted.current = false
       health.abort()
       activeRequest.current?.abort()
+      cameraRequest.current += 1
+      stream.current?.getTracks().forEach(track => track.stop())
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (camera && video.current) video.current.srcObject = stream.current
+  }, [camera])
 
   useEffect(() => {
     if (!supabase) return
@@ -121,6 +132,76 @@ export default function App() {
     }
   }
 
+  function stopCamera() {
+    cameraRequest.current += 1
+    stream.current?.getTracks().forEach(track => track.stop())
+    stream.current = null
+    setCamera(false)
+    setOpeningCamera(false)
+  }
+
+  async function startCamera() {
+    if (busy || openingCamera) return
+    setError('')
+    setNotice('')
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Camera access requires a supported browser on localhost or HTTPS. You can still upload a photo.')
+      return
+    }
+    const request = ++cameraRequest.current
+    setOpeningCamera(true)
+    try {
+      const media = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      })
+      if (!mounted.current || request !== cameraRequest.current) {
+        media.getTracks().forEach(track => track.stop())
+        return
+      }
+      stream.current = media
+      setCamera(true)
+    } catch (error) {
+      if (mounted.current && request === cameraRequest.current) {
+        setError(error.name === 'NotAllowedError'
+          ? 'Camera access was not allowed. Enable camera permission for this site or upload a photo.'
+          : 'Could not open the camera. Check that another app is not using it, or upload a photo.')
+      }
+    } finally {
+      if (mounted.current && request === cameraRequest.current) setOpeningCamera(false)
+    }
+  }
+
+  async function capturePhoto() {
+    const source = video.current
+    if (!source?.videoWidth || busy) {
+      setError('Wait for the camera preview to appear, then try again.')
+      return
+    }
+    setBusy(true)
+    setProgress('Preparing camera photo…')
+    try {
+      const scale = Math.min(1, 3000 / Math.max(source.videoWidth, source.videoHeight))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(source.videoWidth * scale)
+      canvas.height = Math.round(source.videoHeight * scale)
+      canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height)
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .95))
+      if (!blob) throw new Error('Could not capture the photo. Please try again.')
+      stopCamera()
+      if (previewUrl.current) URL.revokeObjectURL(previewUrl.current)
+      const src = URL.createObjectURL(blob)
+      previewUrl.current = src
+      const photo = { src, blob, name: `Camera capture ${new Date().toLocaleTimeString()}` }
+      setImage(photo)
+      await scan(photo)
+    } catch (error) {
+      if (mounted.current) setError(error.message || 'Could not capture the photo. Please try again.')
+    } finally {
+      if (mounted.current) setBusy(false)
+    }
+  }
+
   function choosePlate(index) {
     setSelected(index)
     setPlate(result.plates[index].text)
@@ -152,14 +233,18 @@ export default function App() {
       </header>
       <main>
         <div className="page-heading">
-          <div><p className="eyebrow">SMART PARKING</p><h1>Automatic plate recognition<span>.</span></h1><p>Upload a vehicle photo. We’ll find and read the plates for you.</p></div>
+          <div><p className="eyebrow">SMART PARKING</p><h1>Automatic plate recognition<span>.</span></h1><p>Upload a vehicle photo or capture one with your camera. We’ll find and read the plates for you.</p></div>
           <span className="step-pill">ON-DEVICE ALPR</span>
         </div>
         <div className="scanner-grid">
           <section className="panel capture-panel" aria-labelledby="capture-title">
-            <div className="panel-heading"><h2 id="capture-title"><span className="step-number">01</span> Upload vehicle photo</h2><span className="small-label">JPG · PNG · WEBP</span></div>
+            <div className="panel-heading"><h2 id="capture-title"><span className="step-number">01</span> Capture vehicle</h2><span className="small-label">CAMERA · JPG · PNG · WEBP</span></div>
             <div className="capture-body">
-              {image ? <div className="image-area automatic-preview" aria-busy={busy}>
+              {camera ? <div className="camera-preview">
+                <video ref={video} autoPlay muted playsInline aria-label="Live camera preview" />
+                <span className="live-label"><i /> CAMERA LIVE</span>
+                <div className="camera-guide" aria-hidden="true"><span>Position the vehicle plate inside the frame</span></div>
+              </div> : image ? <div className="image-area automatic-preview" aria-busy={busy}>
                 <img src={image.src} alt="Uploaded vehicle with detected license plates highlighted" draggable="false" />
                 {result?.plates.map((item, index) => <button
                   key={index} type="button" className={`detection-box ${selected === index ? 'selected' : ''}`}
@@ -170,16 +255,22 @@ export default function App() {
               </div> : <div className="empty-capture">
                 <div className="plate-illustration"><span /><strong>ABC 1234</strong><span /></div>
                 <h3>The whole vehicle. Just one photo.</h3>
-                <p>We automatically locate plates and read their characters.<br />No manual cropping required.</p>
+                <p>Upload a photo or use your camera.<br />We automatically locate plates and read their characters.</p>
                 <span className="image-limit">Up to 15 MB · 24 megapixels</span>
               </div>}
-              {image && <div className="image-caption"><span>{image.name}</span><span>{result ? `${result.plates.length} plate(s) detected · ${(result.elapsedMs / 1000).toFixed(1)}s` : 'Automatic detection'}</span></div>}
+              {image && !camera && <div className="image-caption"><span>{image.name}</span><span>{result ? `${result.plates.length} plate(s) detected · ${(result.elapsedMs / 1000).toFixed(1)}s` : 'Automatic detection'}</span></div>}
               <div className="capture-actions">
-                <label className={`button secondary ${busy ? 'disabled' : ''}`}>↑ {image ? 'Choose another photo' : 'Upload & recognize'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={upload} /></label>
-                {image && <button className="button secondary" disabled={busy} onClick={() => scan(image)}>Retry recognition</button>}
+                {camera ? <>
+                  <button className="button secondary camera-capture-button" disabled={busy} onClick={capturePhoto}>● Capture & recognize</button>
+                  <button className="button secondary subtle" disabled={busy} onClick={stopCamera}>Cancel camera</button>
+                </> : <>
+                  <label className={`button secondary ${busy || openingCamera ? 'disabled' : ''}`}>↑ {image ? 'Choose another photo' : 'Upload & recognize'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || openingCamera} onChange={upload} /></label>
+                  <button className="button secondary subtle" disabled={busy || openingCamera} onClick={startCamera}>{openingCamera ? 'Opening camera…' : '◉ Use camera'}</button>
+                  {image && <button className="button secondary subtle" disabled={busy} onClick={() => scan(image)}>Retry recognition</button>}
+                </>}
               </div>
               <div className="engine-status" role="status">{busy ? progress : service}</div>
-              <p className="privacy-note">Photos stay on this computer. Detection and recognition run in your local engine.</p>
+              <p className="privacy-note">Photos and camera captures stay on this computer. Detection and recognition run in your local engine.</p>
             </div>
           </section>
           <section className="panel review-panel" aria-labelledby="review-title">
